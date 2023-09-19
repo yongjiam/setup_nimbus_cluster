@@ -339,5 +339,8 @@ bash ./setup_nfs.sh
 ```bash
 ## to use conda (installed at /data/tools/minoconda3) on all nodes:
 source /data/tools/miniconda3/bin/activate nf-env
+## add mybin to PATH
+export PATH=$PATH:/data/tools/mybin
+pdcp -a .bashrc ~/.bashrc ## copy bash config file to all nodes
 ```
 
