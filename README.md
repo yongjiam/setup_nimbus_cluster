@@ -45,6 +45,9 @@ Host node-5
 User ubuntu
 Hostname 192.168.0.197
 IdentityFile ~/.ssh/slnimbus.pem
+
+## with this, can ssh to each node simply:
+ssh host_name
 ```
 ## 3. add other nodes to /etc/hosts, to run pdsh commands on all nodes
 add the nodes ID and name to /etc/hosts
@@ -144,4 +147,60 @@ yes password | sudo passwd ubuntu ## your password will be "password"
 pdcp -a update_local_password.sh ~/
 pdsh -a bash ./update_local_password.sh
 
+## copy hosts to each node
+pdcp -a /etc/hosts ~/
+pdsh -a sudo mv ~/hosts /etc/hosts
+
+## install slurm on each node
+### setup_host_for_slurm.sh
+sudo apt-get install -yq slurm-client
+
+sudo mkdir -p /etc/slurm-llnl
+sudo mkdir -p /var/spool/slurm-llnl
+sudo mkdir -p /var/spool/slurmd
+sudo mkdir -p /var/log/slurm-llnl
+
+sudo -- sh -c "cat > /etc/slurm-llnl/cgroup.conf << 'EOF'
+CgroupAutomount=yes
+ConstrainCores=yes
+ConstrainDevices=yes
+ConstrainRAMSpace=yes
+ConstrainSwapSpace=yes"
+
+sudo mv ~/slurm.conf /etc/slurm-llnl/slurm.conf
+sudo chown slurm: /etc/slurm-llnl/slurm.conf
+sudo chown slurm: /var/spool/slurm-llnl
+sudo chown slurm: /var/spool/slurmd
+sudo chown slurm: /var/log/slurm-llnl
+sudo chown slurm: /etc/slurm-llnl/cgroup.conf
+
+### install_slurm.sh
+sudo apt-get install -yq slurmctld slurmdbd
+pdsh -a sudo apt-get -yq update
+pdsh -a sudo apt-get -yq upgrade
+pdsh -a sudo apt-get -yq install slurmd pdsh
+pdcp -a slurm.conf ~/slurm.conf
+pdcp -a setup_host_for_slurm.sh ~/setup_host_for_slurm.sh
+pdsh -a bash ./setup_host_for_slurm.sh
+sudo mkdir -p /etc/slurm-llnl
+sudo mv ~/slurm.conf /etc/slurm-llnl/slurm.conf
+sudo chown slurm: /etc/slurm-llnl/slurm.conf
+sudo mkdir -p /var/spool/slurm-llnl
+sudo chown slurm: /var/spool/slurm-llnl
+sudo mkdir -p /var/spool/slurmd
+sudo chown slurm: /var/spool/slurmd
+sudo mkdir -p /var/log/slurm-llnl
+sudo chown slurm: /var/log/slurm-llnl
+sudo touch /var/log/slurm_jobacct.log
+sudo chown slurm: /var/log/slurm_jobacct.log
+
+sudo -- sh -c "cat > /etc/slurm-llnl/cgroup.conf << 'EOF'
+CgroupAutomount=yes
+ConstrainCores=yes
+ConstrainDevices=yes
+ConstrainRAMSpace=yes
+ConstrainSwapSpace=yes"
+
+sudo chown slurm: /etc/slurm-llnl/cgroup.conf
+##
 ```
