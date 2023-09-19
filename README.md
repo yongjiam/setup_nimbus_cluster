@@ -204,3 +204,44 @@ ConstrainSwapSpace=yes"
 sudo chown slurm: /etc/slurm-llnl/cgroup.conf
 ##
 ```
+## 7. install MariaDB and MySQL
+```bash
+## enable slurmbd
+sudo systemctl enable slurmdbd
+
+## Install, start and enable MariaDB:
+sudo apt-get install mariadb-server -yq
+sudo systemctl start mariadb
+sudo systemctl enable mariadb
+sudo systemctl status mariadb
+
+## configure MariaDB root password
+sudo /usr/bin/mysql_secure_installation ## Set password as “password” (as selected in the slurm.conf flle) and select Y for remaining questions.
+
+## grant permission and create mariaDB database
+sudo mysql -p (enter chosen password)
+MariaDB> grant all on slurm_acct_db.* TO 'slurm'@'localhost' identified by 'password' with grant option;
+MariaDB> SHOW VARIABLES LIKE 'have_innodb';
+MariaDB> create database slurm_acct_db;
+MariaDB> show grants;
+MariaDB> quit;
+
+## edit mariaDB config file
+sudo vim /etc/mysql/my.cnf
+## append following:
+[mysqld]
+innodb_buffer_pool_size=16G
+innodb_log_file_size=64M
+innodb_lock_wait_timeout=900
+
+## in case of vim encryption key, to remove the key:
+:set key= ## followed by :w to save
+
+## implement changes
+sudo systemctl stop mariadb
+sudo mv /var/lib/mysql/ib_logfile? /tmp/
+sudo systemctl start mariadb
+sudo mysql -p
+MariaDB> SHOW VARIABLES LIKE 'innodb_buffer_pool_size';
+MariaDB> quit;
+```
