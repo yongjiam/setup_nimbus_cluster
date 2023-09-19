@@ -121,6 +121,7 @@ sudo apt install slurm-wlm-doc ## install slurm "configurator.html"
 scp ubuntu@IP:/usr/share/doc/slurm-wlm/html/configurator.html ./
 
 ## open configurator.html in browser, and modify parameters:
+#### use lscpu and free -m to get infomation
 ControlMachine = node-0 (if the master node is named as such)
 NodeName = node-[1-3] (if named and numbered as such)
 SlurmUser = slurm
