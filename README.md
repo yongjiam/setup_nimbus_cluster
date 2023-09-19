@@ -122,8 +122,8 @@ scp ubuntu@IP:/usr/share/doc/slurm-wlm/html/configurator.html ./
 
 ## open configurator.html in browser, and modify parameters:
 #### use lscpu and free -m to get infomation
-ControlMachine = node-0 (if the master node is named as such)
-NodeName = node-[1-3] (if named and numbered as such)
+ControlMachine = node-1
+NodeName = node-[1-3] ## include master node as compute node as well
 SlurmUser = slurm
 StateSaveLocation = /var/spool/slurm-llnl
 ProctrackType = Cgroup
