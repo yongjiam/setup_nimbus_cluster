@@ -245,3 +245,98 @@ sudo mysql -p
 MariaDB> SHOW VARIABLES LIKE 'innodb_buffer_pool_size';
 MariaDB> quit;
 ```
+## 8. slurmdbd setup
+```bash
+zcat /usr/share/doc/slurmdbd/examples/slurmdbd.conf.simple.gz > slurmdbd.conf
+
+## Edit the slurmdbd.conf file (sudo vim slurmdbd.conf) set the following:
+Set DbdHost to localhost
+Set StorageHost to localhost
+Set StorageLoc to slurm_acct_db
+Set StoragePass to password (or whatever password was chosen to access MariaDB)
+Set StorageType to accounting_storage/mysql
+Set StorageUser to slurm
+Set LogFile to /var/log/slurm-llnl/slurmdbd.log
+Set PidFile to /var/run/slurmdbd.pid
+Set SlurmUser to slurm
+
+## Move the slurmdbd.conf to the slurm directory:
+sudo mv slurmdbd.conf /etc/slurm-llnl/
+sudo chown slurm:slurm /etc/slurm-llnl/slurmdbd.conf
+sudo chmod 664 /etc/slurm-llnl/slurmdbd.conf
+
+## Run SlurmDBD interactively with debug options to check for any errors 
+sudo slurmdbd -D -vvv ## ctrl+c to end
+
+## Check that the “slurm_acct_db” has been populated with tables:
+mysql -p -u slurm slurm_acct_db
+MariaDB> show tables;
+MariaDB> quit;
+
+## start slurmdbd service
+sudo systemctl enable slurmdbd
+sudo systemctl start slurmdbd
+sudo systemctl status slurmdbd
+```
+## 9. start slurmdbd, slurmctld, slurmd on all nodes
+```bash
+## start and status check
+sudo systemctl enable slurmdbd
+sudo systemctl start slurmdbd
+sudo systemctl status slurmdbd
+
+sudo systemctl stop slurmctld
+sudo systemctl start slurmctld
+sudo systemctl status slurmctld
+
+pdsh -a sudo systemctl stop slurmd
+pdsh -a sudo systemctl enable slurmd
+pdsh -a sudo systemctl status slurmd
+
+pdsh -a sudo slurmd
+pdsh -a sudo slurmd -Dcvvv
+## run check
+sinfo (displays node information)
+sudo sacct (requires SlurmDBD and shows previous or running jobs)
+scontrol show jobs (shows details of currently running jobs)
+scontrol ping (pings slurmctld and shows its status)
+
+## if some service inactive, try:
+sudo service slurmdbd restart
+sudo service slurmctld restart
+pdsh -a sudo service slurmd restart
+sudo systemctl status slurmdbd
+sudo systemctl status slurmctld
+pdsh -a sudo systemctl status slurmd
+```
+## 10. mount shared /data volume to all nodes
+```bash
+## setup_nfs.sh
+pdsh -a sudo apt-get -yq install nfs-common
+sudo apt-get install -yq rpcbind nfs-kernel-server
+
+sudo -- sh -c "cat > /etc/exports << 'EOF'
+/data 192.168.0.152(rw,sync,no_subtree_check)
+/data 192.168.0.147(rw,sync,no_subtree_check)
+/data 192.168.0.74(rw,sync,no_subtree_check)
+/data 192.168.0.197(rw,sync,no_subtree_check)"
+
+sudo /etc/init.d/rpcbind restart
+sudo /etc/init.d/nfs-kernel-server restart
+sudo exportfs -r
+
+pdsh -a sudo mkdir /data
+pdsh -a sudo chown -R ubuntu:ubuntu /data
+pdsh -a sudo mount 192.168.0.196:/data /data
+
+pdsh -a ls /data
+sudo chown -R ubuntu:ubuntu /data
+## RUN:
+bash ./setup_nfs.sh
+```
+## Now, you should be able to submit jobs to all nodes!!!
+```bash
+## to use conda (installed at /data/tools/minoconda3) on all nodes:
+source /data/tools/miniconda3/bin/activate nf-env
+```
+
