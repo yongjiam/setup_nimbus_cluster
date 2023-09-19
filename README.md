@@ -1,5 +1,5 @@
 # setup_nimbus_cluster
-slight modification of guides at https://brettchapman.github.io/Nimbus_Cluster
+slight modification from guides at https://brettchapman.github.io/Nimbus_Cluster
 and
 https://github.com/TimoLassmann/dot-files/blob/master/additional/setup_nimbus_cluster.org
 ## 1. create multiple instances
