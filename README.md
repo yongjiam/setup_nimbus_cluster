@@ -309,6 +309,10 @@ pdsh -a sudo service slurmd restart
 sudo systemctl status slurmdbd
 sudo systemctl status slurmctld
 pdsh -a sudo systemctl status slurmd
+
+## shutdown and resume a node
+sudo scontrol update NodeName=node-5 State=DOWN Reason="undraining"
+sudo scontrol update NodeName=node-5 State=RESUME
 ```
 ## 10. mount shared /data volume to all nodes
 ```bash
